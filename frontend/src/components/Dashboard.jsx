@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Sidebar, SidebarHeader, SidebarContent, SidebarTrigger } from './ui/Sidebar.jsx';
@@ -20,11 +20,13 @@ import {
   DollarSign,
   Activity,
   Target,
-  Sparkles
+  Sparkles,
+  Menu,
+  ChevronLeft,
+  ChevronDown
 } from 'lucide-react';
 import { Input } from './ui/Input.jsx';
 import { AppNavbar } from './AppNavbar.jsx';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/Select.jsx';
 import { Button } from './ui/Button.jsx';
 import { Chatbot } from './Chatbot.jsx';
 import ThemeToggle from './ThemeToggle.jsx';
@@ -115,35 +117,35 @@ const CompanyList = ({ companies, selectedCompany, onSelect, favorites, onToggle
   return (
     <div className="h-full flex flex-col relative">
       {/* Fixed height scrollable container */}
-      <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 py-2 space-y-1 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-gray-100 dark:scrollbar-track-gray-800 hover:scrollbar-thumb-gray-400 dark:hover:scrollbar-thumb-gray-500">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden px-2 sm:px-4 py-2 space-y-1 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-gray-100 dark:scrollbar-track-gray-800 hover:scrollbar-thumb-gray-400 dark:hover:scrollbar-thumb-gray-500">
         {sortedCompanies.map(c => (
           <button
             key={c.symbol}
             onClick={() => onSelect(c)}
             onContextMenu={(e) => handleRightClick(e, c)}
-            className={`w-full text-left p-3 rounded-lg flex items-center gap-3 transition-all duration-200 ${
+            className={`w-full text-left p-2 sm:p-3 rounded-lg flex items-center gap-2 sm:gap-3 transition-all duration-200 ${
               selectedCompany?.symbol === c.symbol
                 ? 'bg-primary/10 text-primary border border-primary/20'
                 : 'hover:bg-muted/50 border border-transparent'
             }`}
           >
-            <div className="flex items-center gap-2 flex-1">
-              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                <Building2 className="w-4 h-4 text-primary" />
+            <div className="flex items-center gap-2 flex-1 min-w-0">
+              <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                <Building2 className="w-3 h-3 sm:w-4 sm:h-4 text-primary" />
               </div>
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="font-medium text-sm truncate">{c.name}</span>
+                <div className="flex items-center gap-1 sm:gap-2">
+                  <span className="font-medium text-xs sm:text-sm truncate">{c.name}</span>
                   {favorites.includes(c.symbol) && (
-                    <Star className="w-4 h-4 text-yellow-500 fill-current flex-shrink-0" />
+                    <Star className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-500 fill-current flex-shrink-0" />
                   )}
                 </div>
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <div className="flex items-center gap-1 sm:gap-2 text-xs text-muted-foreground">
                   <span>{c.symbol}</span>
                   {c.sector && (
                     <>
-                      <span>•</span>
-                      <span className="truncate">{c.sector}</span>
+                      <span className="hidden sm:inline">•</span>
+                      <span className="truncate hidden sm:inline">{c.sector}</span>
                     </>
                   )}
                 </div>
@@ -155,8 +157,8 @@ const CompanyList = ({ companies, selectedCompany, onSelect, favorites, onToggle
         {/* Empty state */}
         {sortedCompanies.length === 0 && (
           <div className="text-center py-8 text-muted-foreground">
-            <Building2 className="w-8 h-8 mx-auto mb-2 opacity-50" />
-            <p className="text-sm">No companies found</p>
+            <Building2 className="w-6 h-6 sm:w-8 sm:h-8 mx-auto mb-2 opacity-50" />
+            <p className="text-xs sm:text-sm">No companies found</p>
           </div>
         )}
       </div>
@@ -204,6 +206,24 @@ const Dashboard = () => {
     return saved ? JSON.parse(saved) : [];
   });
 
+  // Mobile sidebar state
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Close sidebar when clicking outside on mobile
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (sidebarOpen && window.innerWidth < 1024) {
+        const sidebar = document.getElementById('mobile-sidebar');
+        if (sidebar && !sidebar.contains(event.target)) {
+          setSidebarOpen(false);
+        }
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [sidebarOpen]);
+
   // Forecast states - FIXED INITIALIZATION
   const [forecastData, setForecastData] = useState(null);
   const [forecastLoading, setForecastLoading] = useState(false);
@@ -222,6 +242,10 @@ const Dashboard = () => {
       setForecastData(null);
       setForecastError(null);
       setForecastLoading(false);
+      // Close sidebar on mobile when company is selected
+      if (window.innerWidth < 1024) {
+        setSidebarOpen(false);
+      }
     }
   }, [selectedCompany]);
 
@@ -333,13 +357,73 @@ const Dashboard = () => {
     setSortBy('name');
   };
 
+  // Enhanced filtering logic with new market cap and sector categorization
   const filteredCompanies = useMemo(() => {
     let filtered = companies.filter(c => {
       const matchesSearch = c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                            c.symbol.toLowerCase().includes(searchQuery.toLowerCase());
 
-      const matchesMarketCap = marketCapFilter === 'all' || c.marketCap === marketCapFilter;
-      const matchesSector = sectorFilter === 'all' || c.sector === sectorFilter;
+      // Enhanced market cap filtering
+      let matchesMarketCap = true;
+      if (marketCapFilter !== 'all') {
+        const marketCapValue = parseFloat(c.marketCapValue) || 0; // Assuming this field exists
+        switch (marketCapFilter) {
+          case 'large':
+            matchesMarketCap = marketCapValue >= 10000000000; // $10B+
+            break;
+          case 'mid':
+            matchesMarketCap = marketCapValue >= 2000000000 && marketCapValue < 10000000000; // $2B-$10B
+            break;
+          case 'small':
+            matchesMarketCap = marketCapValue < 2000000000; // <$2B
+            break;
+          default:
+            matchesMarketCap = true;
+        }
+      }
+
+      // Enhanced sector filtering
+      let matchesSector = true;
+      if (sectorFilter !== 'all') {
+        const sectorLower = (c.sector || '').toLowerCase();
+        switch (sectorFilter) {
+          case 'technology':
+            matchesSector = sectorLower.includes('tech') || sectorLower.includes('software') || sectorLower.includes('internet');
+            break;
+          case 'healthcare':
+            matchesSector = sectorLower.includes('health') || sectorLower.includes('pharma') || sectorLower.includes('biotech');
+            break;
+          case 'financials':
+            matchesSector = sectorLower.includes('financial') || sectorLower.includes('bank') || sectorLower.includes('insurance');
+            break;
+          case 'energy':
+            matchesSector = sectorLower.includes('energy') || sectorLower.includes('oil') || sectorLower.includes('gas');
+            break;
+          case 'consumer-discretionary':
+            matchesSector = sectorLower.includes('consumer') && sectorLower.includes('discretionary');
+            break;
+          case 'consumer-staples':
+            matchesSector = sectorLower.includes('consumer') && sectorLower.includes('staples');
+            break;
+          case 'industrials':
+            matchesSector = sectorLower.includes('industrial') || sectorLower.includes('manufacturing');
+            break;
+          case 'materials':
+            matchesSector = sectorLower.includes('materials') || sectorLower.includes('mining');
+            break;
+          case 'utilities':
+            matchesSector = sectorLower.includes('utilities') || sectorLower.includes('utility');
+            break;
+          case 'real-estate':
+            matchesSector = sectorLower.includes('real estate') || sectorLower.includes('reit');
+            break;
+          case 'telecommunications':
+            matchesSector = sectorLower.includes('telecom') || sectorLower.includes('communication');
+            break;
+          default:
+            matchesSector = c.sector === sectorFilter;
+        }
+      }
 
       return matchesSearch && matchesMarketCap && matchesSector;
     });
@@ -391,12 +475,12 @@ const Dashboard = () => {
 
   const ForecastCard = ({ title, value, icon: Icon, trend, confidence, description }) => (
     <Card className="relative overflow-hidden">
-      <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-br from-primary/10 to-transparent rounded-bl-full"></div>
+      <div className="absolute top-0 right-0 w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-primary/10 to-transparent rounded-bl-full"></div>
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Icon className="w-4 h-4 text-primary" />
-            <CardTitle className="text-sm font-medium">{title}</CardTitle>
+            <Icon className="w-3 h-3 sm:w-4 sm:h-4 text-primary" />
+            <CardTitle className="text-xs sm:text-sm font-medium">{title}</CardTitle>
           </div>
           {confidence && (
             <div className="text-xs text-muted-foreground">
@@ -408,7 +492,7 @@ const Dashboard = () => {
       <CardContent>
         <div className="space-y-2">
           <div className="flex items-baseline gap-2">
-            <span className="text-xl font-bold">{value}</span>
+            <span className="text-lg sm:text-xl font-bold">{value}</span>
             {trend && (
               <div className={`flex items-center gap-1 text-xs ${trend.positive ? 'text-green-600' : 'text-red-600'}`}>
                 {trend.positive ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
@@ -427,207 +511,315 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
       <AppNavbar />
-      <div className="flex flex-1">
-        <Sidebar className="w-80 border-r bg-card flex flex-col h-screen sticky top-0">
-          <SidebarHeader className="flex-shrink-0 border-b bg-card/50 backdrop-blur-sm">
-            <div className="p-4 space-y-4">
-              <div className="relative">
-                <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search companies..."
-                  className="pl-8"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
+      <div className="flex flex-1 relative overflow-hidden">
+        {/* Mobile overlay */}
+        {sidebarOpen && (
+          <div 
+            className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+            onClick={() => {
+              console.log('Overlay clicked, closing sidebar');
+              setSidebarOpen(false);
+            }}
+          />
+        )}
 
-              <div className="flex items-center justify-between">
-                <button
-                  onClick={() => setShowFilters(!showFilters)}
-                  className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  <Filter className="h-4 w-4" />
-                  Filters
+        {/* FIXED SIDEBAR - Now properly fixed for large screens too */}
+        <div 
+          id="mobile-sidebar"
+          className={`
+            fixed inset-y-0 left-0 z-50 w-80 sm:w-96 lg:w-80
+            transition-transform duration-300 ease-in-out
+            ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+            lg:pt-16
+          `}
+          style={{
+            // Force fixed positioning and proper height on all screen sizes
+            position: 'fixed',
+            top: '0',
+            left: sidebarOpen || window.innerWidth >= 1024 ? '0' : '-100%',
+            height: '100vh',
+            zIndex: 50
+          }}
+        >
+          {/* CRITICAL: Set explicit height and flex structure */}
+          <div className="w-full h-full border-r bg-background flex flex-col shadow-lg lg:shadow-md">
+            {/* Mobile close button */}
+            <div className="lg:hidden flex justify-between items-center p-4 border-b bg-background flex-shrink-0">
+              <h2 className="font-semibold text-lg">Companies</h2>
+              <button
+                onClick={() => {
+                  console.log('Close button clicked');
+                  setSidebarOpen(false);
+                }}
+                className="h-8 w-8 p-0 hover:bg-muted rounded-full flex items-center justify-center"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            {/* Header Section - Fixed height, no flex-grow */}
+            <div className="flex-shrink-0 border-b bg-background">
+              <div className="p-3 sm:p-4 space-y-3 sm:space-y-4">
+                <div className="relative">
+                  <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search companies..."
+                    className="pl-8 text-sm bg-background"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <button
+                    onClick={() => setShowFilters(!showFilters)}
+                    className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    <Filter className="h-4 w-4" />
+                    Filters
+                    {activeFiltersCount > 0 && (
+                      <span className="bg-primary text-primary-foreground text-xs px-1.5 py-0.5 rounded-full">
+                        {activeFiltersCount}
+                      </span>
+                    )}
+                  </button>
                   {activeFiltersCount > 0 && (
-                    <span className="bg-primary text-primary-foreground text-xs px-1.5 py-0.5 rounded-full">
-                      {activeFiltersCount}
+                    <button
+                      onClick={clearFilters}
+                      className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      <X className="h-3 w-3" />
+                      Clear
+                    </button>
+                  )}
+                </div>
+
+                {showFilters && (
+                  <div className="space-y-3 p-3 bg-muted/30 rounded-lg">
+                    <div>
+                      <label className="text-xs font-medium text-muted-foreground mb-1 block">Market Cap</label>
+                      <select 
+                        value={marketCapFilter} 
+                        onChange={(e) => setMarketCapFilter(e.target.value)}
+                        className="w-full h-8 px-3 text-sm border border-input bg-background hover:bg-accent rounded-md transition-colors"
+                      >
+                        <option value="all">All Market Caps</option>
+                        <option value="large">Large Cap ({`>`}$10B)</option>
+                        <option value="mid">Mid Cap ($2B-$10B)</option>
+                        <option value="small">Small Cap ({`<`}$2B)</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-medium text-muted-foreground mb-1 block">Sector</label>
+                      <select 
+                        value={sectorFilter} 
+                        onChange={(e) => setSectorFilter(e.target.value)}
+                        className="w-full h-8 px-3 text-sm border border-input bg-background hover:bg-accent rounded-md transition-colors"
+                      >
+                        <option value="all">All Sectors</option>
+                        <option value="technology">Technology</option>
+                        <option value="healthcare">Healthcare</option>
+                        <option value="financials">Financials</option>
+                        <option value="energy">Energy</option>
+                        <option value="consumer-discretionary">Consumer Discretionary</option>
+                        <option value="consumer-staples">Consumer Staples</option>
+                        <option value="industrials">Industrials</option>
+                        <option value="materials">Materials</option>
+                        <option value="utilities">Utilities</option>
+                        <option value="real-estate">Real Estate</option>
+                        <option value="telecommunications">Telecommunications</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-medium text-muted-foreground mb-1 block">Sort By</label>
+                      <select 
+                        value={sortBy} 
+                        onChange={(e) => setSortBy(e.target.value)}
+                        className="w-full h-8 px-3 text-sm border border-input bg-background hover:bg-accent rounded-md transition-colors"
+                      >
+                        <option value="name">Company Name</option>
+                        <option value="symbol">Symbol</option>
+                        <option value="sector">Sector</option>
+                        <option value="marketCap">Market Cap</option>
+                      </select>
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex items-center justify-between text-xs text-muted-foreground">
+                  <span>{filteredCompanies.length} companies</span>
+                  {favorites.length > 0 && (
+                    <span className="flex items-center gap-1">
+                      <Star className="h-3 w-3 text-yellow-500 fill-current" />
+                      {favorites.length} favorites
                     </span>
                   )}
-                </button>
-                {activeFiltersCount > 0 && (
-                  <button
-                    onClick={clearFilters}
-                    className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    <X className="h-3 w-3" />
-                    Clear
-                  </button>
-                )}
-              </div>
-
-              {showFilters && (
-                <div className="space-y-3 p-3 bg-muted/30 rounded-lg">
-                  <div>
-                    <label className="text-xs font-medium text-muted-foreground mb-1 block">Market Cap</label>
-                    <Select value={marketCapFilter} onValueChange={setMarketCapFilter}>
-                      <SelectTrigger className="h-8">
-                        <SelectValue placeholder="All Market Caps" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Market Caps</SelectItem>
-                        {uniqueMarketCaps.map(cap => (
-                          <SelectItem key={cap} value={cap}>{cap}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div>
-                    <label className="text-xs font-medium text-muted-foreground mb-1 block">Sector</label>
-                    <Select value={sectorFilter} onValueChange={setSectorFilter}>
-                      <SelectTrigger className="h-8">
-                        <SelectValue placeholder="All Sectors" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Sectors</SelectItem>
-                        {uniqueSectors.map(sector => (
-                          <SelectItem key={sector} value={sector}>{sector}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div>
-                    <label className="text-xs font-medium text-muted-foreground mb-1 block">Sort By</label>
-                    <Select value={sortBy} onValueChange={setSortBy}>
-                      <SelectTrigger className="h-8">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="name">Company Name</SelectItem>
-                        <SelectItem value="symbol">Symbol</SelectItem>
-                        <SelectItem value="sector">Sector</SelectItem>
-                        <SelectItem value="marketCap">Market Cap</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
                 </div>
-              )}
-
-              <div className="flex items-center justify-between text-xs text-muted-foreground">
-                <span>{filteredCompanies.length} companies</span>
-                {favorites.length > 0 && (
-                  <span className="flex items-center gap-1">
-                    <Star className="h-3 w-3 text-yellow-500 fill-current" />
-                    {favorites.length} favorites
-                  </span>
-                )}
               </div>
             </div>
-          </SidebarHeader>
 
-          <SidebarContent className="flex-1">
-            <div
-              className="h-full overflow-y-auto p-4 space-y-1"
-              style={{
-                scrollbarWidth: 'thin',
-                scrollbarColor: 'rgb(156 163 175) transparent'
+            {/* CRITICAL: Scrollable Content Section with proper flex-1 and min-height-0 */}
+            <div className="flex-1 min-h-0 bg-background">
+              <div 
+                className="h-full overflow-y-auto overflow-x-hidden sidebar-scroll scrollbar-thin scrollbar-thumb-slate-400 dark:scrollbar-thumb-slate-600 scrollbar-track-transparent hover:scrollbar-thumb-slate-500 dark:hover:scrollbar-thumb-slate-500"
+              >
+                {/* Enhanced scrollbar styles for webkit browsers to match dark theme */}
+                <style jsx>{`
+                  .sidebar-scroll::-webkit-scrollbar {
+                    width: 10px;
+                  }
+                  .sidebar-scroll::-webkit-scrollbar-track {
+                    background: transparent;
+                    border-radius: 8px;
+                  }
+                  .sidebar-scroll::-webkit-scrollbar-thumb {
+                    background: rgba(148, 163, 184, 0.4);
+                    border-radius: 6px;
+                    border: none;
+                  }
+                  .sidebar-scroll::-webkit-scrollbar-thumb:hover {
+                    background: rgba(148, 163, 184, 0.6);
+                  }
+                  .sidebar-scroll::-webkit-scrollbar-thumb:active {
+                    background: rgba(59, 130, 246, 0.8);
+                  }
+                  
+                  /* Dark theme styles */
+                  .dark .sidebar-scroll::-webkit-scrollbar-thumb {
+                    background: rgba(100, 116, 139, 0.5);
+                  }
+                  .dark .sidebar-scroll::-webkit-scrollbar-thumb:hover {
+                    background: rgba(100, 116, 139, 0.7);
+                  }
+                  .dark .sidebar-scroll::-webkit-scrollbar-thumb:active {
+                    background: rgba(59, 130, 246, 0.8);
+                  }
+                  
+                  /* Smooth transitions */
+                  .sidebar-scroll::-webkit-scrollbar-thumb {
+                    transition: background-color 0.2s ease;
+                  }
+                  
+                  /* Hide scrollbar corner */
+                  .sidebar-scroll::-webkit-scrollbar-corner {
+                    background: transparent;
+                  }
+                  
+                  /* Subtle appearance when not hovering */
+                  .sidebar-scroll:not(:hover)::-webkit-scrollbar-thumb {
+                    background: rgba(148, 163, 184, 0.2);
+                  }
+                  .dark .sidebar-scroll:not(:hover)::-webkit-scrollbar-thumb {
+                    background: rgba(100, 116, 139, 0.3);
+                  }
+                `}</style>
+
+                <div className="p-2 sm:p-4 space-y-1">
+                  {filteredCompanies.map(c => (
+                    <button
+                      key={c.symbol}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log('Company selected:', c.symbol);
+                        setSelectedCompany(c);
+                      }}
+                      onContextMenu={(e) => {
+                        e.preventDefault();
+                        toggleFavorite(c.symbol);
+                      }}
+                      className={`w-full text-left p-2 sm:p-3 rounded-lg flex items-center gap-2 sm:gap-3 transition-all duration-200 ${
+                        selectedCompany?.symbol === c.symbol
+                          ? 'bg-primary/10 text-primary border border-primary/20'
+                          : 'hover:bg-muted/50 border border-transparent'
+                      }`}
+                      style={{ touchAction: 'manipulation' }}
+                    >
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                          <Building2 className="w-3 h-3 sm:w-4 sm:h-4 text-primary" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1 sm:gap-2">
+                            <span className="font-medium text-xs sm:text-sm truncate">{c.name}</span>
+                            {favorites.includes(c.symbol) && (
+                              <Star className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-500 fill-current flex-shrink-0" />
+                            )}
+                          </div>
+                          <div className="flex items-center gap-1 sm:gap-2 text-xs text-muted-foreground">
+                            <span>{c.symbol}</span>
+                            {c.sector && (
+                              <>
+                                <span className="hidden sm:inline">•</span>
+                                <span className="truncate hidden sm:inline">{c.sector}</span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+
+                  {filteredCompanies.length === 0 && (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <Building2 className="w-6 h-6 sm:w-8 sm:h-8 mx-auto mb-2 opacity-50" />
+                      <p className="text-xs sm:text-sm">No companies found</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Main content - Now with proper margin to account for fixed sidebar */}
+        <main className="flex-1 p-3 sm:p-4 lg:p-6 overflow-y-auto lg:ml-80 transition-all duration-300">
+          {/* Mobile menu button */}
+          <div className="lg:hidden mb-4 relative z-10">
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('Hamburger clicked - setting sidebar to true');
+                setSidebarOpen(!sidebarOpen);
               }}
+              className="flex items-center gap-2 w-full sm:w-auto justify-center px-4 py-2 border border-input bg-background hover:bg-accent hover:text-accent-foreground rounded-md transition-colors"
+              style={{ touchAction: 'manipulation' }}
             >
-              <style jsx>{`
-                div::-webkit-scrollbar {
-                  width: 6px;
-                }
-                div::-webkit-scrollbar-track {
-                  background: transparent;
-                }
-                div::-webkit-scrollbar-thumb {
-                  background: rgb(156 163 175);
-                  border-radius: 3px;
-                }
-                div::-webkit-scrollbar-thumb:hover {
-                  background: rgb(107 114 128);
-                }
-                .dark div::-webkit-scrollbar-thumb {
-                  background: rgb(75 85 99);
-                }
-                .dark div::-webkit-scrollbar-thumb:hover {
-                  background: rgb(107 114 128);
-                }
-              `}</style>
-
-              {filteredCompanies.map(c => (
-                <button
-                  key={c.symbol}
-                  onClick={() => setSelectedCompany(c)}
-                  onContextMenu={(e) => {
-                    e.preventDefault();
-                    toggleFavorite(c.symbol);
-                  }}
-                  className={`w-full text-left p-3 rounded-lg flex items-center gap-3 transition-all duration-200 ${
-                    selectedCompany?.symbol === c.symbol
-                      ? 'bg-primary/10 text-primary border border-primary/20'
-                      : 'hover:bg-muted/50 border border-transparent'
-                  }`}
-                >
-                  <div className="flex items-center gap-2 flex-1">
-                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                      <Building2 className="w-4 h-4 text-primary" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium text-sm truncate">{c.name}</span>
-                        {favorites.includes(c.symbol) && (
-                          <Star className="w-4 h-4 text-yellow-500 fill-current flex-shrink-0" />
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <span>{c.symbol}</span>
-                        {c.sector && (
-                          <>
-                            <span>•</span>
-                            <span className="truncate">{c.sector}</span>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </button>
-              ))}
-
-              {filteredCompanies.length === 0 && (
-                <div className="text-center py-8 text-muted-foreground">
-                  <Building2 className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                  <p className="text-sm">No companies found</p>
-                </div>
+              <Menu className="h-4 w-4" />
+              <span>Companies</span>
+              {selectedCompany && (
+                <span className="text-xs text-muted-foreground ml-1">
+                  ({selectedCompany.symbol})
+                </span>
               )}
-            </div>
-          </SidebarContent>
-        </Sidebar>
+            </button>
+          </div>
 
-        <main className="flex-1 p-6">
           {selectedCompany ? (
-            <div>
-              <div className="flex items-center justify-between mb-4">
+            <div className="max-w-full">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-2">
                 <div>
                   <div className="flex items-center gap-2">
-                    <h1 className="text-2xl font-bold">{selectedCompany.name}</h1>
+                    <h1 className="text-xl sm:text-2xl font-bold truncate">{selectedCompany.name}</h1>
                     {favorites.includes(selectedCompany.symbol) && (
-                      <Star className="w-5 h-5 text-yellow-500 fill-current" />
+                      <Star className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-500 fill-current flex-shrink-0" />
                     )}
                   </div>
-                  <div className="flex items-center gap-2 text-muted-foreground">
+                  <div className="flex flex-wrap items-center gap-1 sm:gap-2 text-sm text-muted-foreground">
                     <span>{selectedCompany.symbol}</span>
                     {selectedCompany.sector && (
                       <>
-                        <span>•</span>
-                        <span>{selectedCompany.sector}</span>
+                        <span className="hidden sm:inline">•</span>
+                        <span className="hidden sm:inline">{selectedCompany.sector}</span>
                       </>
                     )}
                     {selectedCompany.marketCap && (
                       <>
-                        <span>•</span>
-                        <span>{selectedCompany.marketCap}</span>
+                        <span className="hidden sm:inline">•</span>
+                        <span className="hidden sm:inline">{selectedCompany.marketCap}</span>
                       </>
                     )}
                   </div>
@@ -635,238 +827,257 @@ const Dashboard = () => {
                 {/* <ThemeToggle /> */}
               </div>
 
-              <StockDetails data={stockData} />
+              <div className="space-y-4 sm:space-y-6">
+                <StockDetails data={stockData} />
 
-              <Card className="mt-6">
-                <CardHeader>
-                  <CardTitle>Price History</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <StockChart data={stockData} />
-                </CardContent>
-              </Card>
-
-              {/* FIXED FORECAST SECTION - Always visible when company is selected */}
-              <Card className="mt-6">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Brain className="w-5 h-5 text-primary" />
-                    AI Stock Forecast
-                    <div className="flex items-center gap-1 bg-primary/10 px-2 py-1 rounded-full">
-                      <Sparkles className="w-3 h-3 text-primary" />
-                      <span className="text-xs font-medium text-primary">AI Powered</span>
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg sm:text-xl">Price History</CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-2 sm:p-6">
+                    <div className="w-full overflow-x-auto">
+                      <StockChart data={stockData} />
                     </div>
-                  </CardTitle>
-                </CardHeader>
+                  </CardContent>
+                </Card>
 
-                <CardContent className="space-y-6">
-                  {/* Controls Section - Always visible */}
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="space-y-2 flex-1">
-                      <label className="text-sm font-medium">Forecast Period: {formatPeriodLabel(forecastPeriod)}</label>
-                      <Slider
-                        value={[forecastPeriod]}
-                        onValueChange={(value) => setForecastPeriod(value[0])}
-                        max={30}
-                        min={1}
-                        step={1}
-                        className="w-full"
-                      />
-                      <div className="flex justify-between text-xs text-muted-foreground">
-                        <span>1 Day</span>
-                        <span>2 Weeks</span>
-                        <span>1 Month</span>
+                {/* FIXED FORECAST SECTION - Always visible when company is selected */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex flex-wrap items-center gap-2 text-lg sm:text-xl">
+                      <Brain className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
+                      <span>AI Stock Forecast</span>
+                      <div className="flex items-center gap-1 bg-primary/10 px-2 py-1 rounded-full">
+                        <Sparkles className="w-3 h-3 text-primary" />
+                        <span className="text-xs font-medium text-primary">AI Powered</span>
                       </div>
-                    </div>
-                    <button
-                      onClick={generateAIForecast}
-                      disabled={!selectedCompany || forecastLoading}
-                      className="flex items-center gap-2 min-w-[140px] px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {forecastLoading ? (
-                        <>
-                          <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                          Analyzing...
-                        </>
-                      ) : (
-                        <>
-                          <Zap className="w-4 h-4" />
-                          Generate Forecast
-                        </>
-                      )}
-                    </button>
-                  </div>
+                    </CardTitle>
+                  </CardHeader>
 
-                  {/* Error Display */}
-                  {forecastError && (
-                    <div className="p-4 bg-red-50 dark:bg-red-950/20 border border-red-200 rounded-lg">
-                      <div className="flex items-center gap-2 text-red-600">
-                        <AlertTriangle className="w-4 h-4" />
-                        <span className="text-sm font-medium">Forecast Error</span>
-                      </div>
-                      <p className="text-sm text-red-700 dark:text-red-300 mt-1">{forecastError}</p>
-                      <Button
-                        onClick={generateAIForecast}
-                        variant="outline"
-                        size="sm"
-                        className="mt-2 text-red-600 border-red-300 hover:bg-red-50"
-                      >
-                        Try Again
-                      </Button>
-                    </div>
-                  )}
-
-                  {/* Loading Display */}
-                  {forecastLoading && (
-                    <div className="text-center py-8">
-                      <div className="inline-flex flex-col items-center gap-3 text-muted-foreground">
-                        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                        <div className="space-y-1">
-                          <p className="text-sm font-medium">Generating AI forecast...</p>
-                          <p className="text-xs">This may take up to 30 seconds</p>
+                  <CardContent className="space-y-4 sm:space-y-6">
+                    {/* Controls Section - Always visible */}
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                      <div className="space-y-2 flex-1 w-full sm:w-auto">
+                        <label className="text-sm font-medium">Forecast Period: {formatPeriodLabel(forecastPeriod)}</label>
+                        <Slider
+                          value={[forecastPeriod]}
+                          onValueChange={(value) => setForecastPeriod(value[0])}
+                          max={30}
+                          min={1}
+                          step={1}
+                          className="w-full"
+                        />
+                        <div className="flex justify-between text-xs text-muted-foreground">
+                          <span>1 Day</span>
+                          <span>2 Weeks</span>
+                          <span>1 Month</span>
                         </div>
                       </div>
+                      <button
+                        onClick={generateAIForecast}
+                        disabled={!selectedCompany || forecastLoading}
+                        className="flex items-center gap-2 w-full sm:w-auto sm:min-w-[140px] px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                      >
+                        {forecastLoading ? (
+                          <>
+                            <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                            Analyzing...
+                          </>
+                        ) : (
+                          <>
+                            <Zap className="w-4 h-4" />
+                            Generate Forecast
+                          </>
+                        )}
+                      </button>
                     </div>
-                  )}
 
-                  {/* Results Display */}
-                  {forecastData && !forecastLoading && !forecastError && (
-                    <div className="space-y-6">
-                      <div className="grid md:grid-cols-3 gap-4">
-                        <ForecastCard
-                          title="Predicted Price"
-                          value={`$${(forecastData.forecast?.targetPrice ?? 0).toFixed(2)}`}
-                          icon={DollarSign}
-                          trend={{
-                            positive: (forecastData.forecast?.targetPrice ?? 0) >= currentPrice,
-                            value: `${((((forecastData.forecast?.targetPrice ?? 0) - currentPrice) / currentPrice) * 100)?.toFixed(2) || '0'}%`
-                          }}
-                          confidence={forecastData.forecast?.confidence}
-                          description={`${forecastPeriod} day${forecastPeriod > 1 ? 's' : ''} ahead prediction`}
-                        />
-                        <ForecastCard
-                          title="Market Sentiment"
-                          value={forecastData.forecast?.trend?.charAt(0).toUpperCase() + forecastData.forecast?.trend?.slice(1) || 'Neutral'}
-                          icon={Activity}
-                          confidence={forecastData.forecast?.confidence}
-                          description={forecastData.analysis?.keyFactors?.[0] || 'Based on technical analysis'}
-                        />
-                        <ForecastCard
-                          title="Risk Level"
-                          value={forecastData.analysis?.riskLevel?.charAt(0).toUpperCase() + forecastData.analysis?.riskLevel?.slice(1) || 'Medium'}
-                          icon={AlertTriangle}
-                          confidence={forecastData.forecast?.confidence}
-                          description={`Range: ${(forecastData.forecast?.priceRange?.low ?? 0).toFixed(2)} - ${(forecastData.forecast?.priceRange?.high ?? 0).toFixed(2)}`}
-                        />
+                    {/* Error Display */}
+                    {forecastError && (
+                      <div className="p-4 bg-red-50 dark:bg-red-950/20 border border-red-200 rounded-lg">
+                        <div className="flex items-center gap-2 text-red-600">
+                          <AlertTriangle className="w-4 h-4" />
+                          <span className="text-sm font-medium">Forecast Error</span>
+                        </div>
+                        <p className="text-sm text-red-700 dark:text-red-300 mt-1">{forecastError}</p>
+                        <Button
+                          onClick={generateAIForecast}
+                          variant="outline"
+                          size="sm"
+                          className="mt-2 text-red-600 border-red-300 hover:bg-red-50"
+                        >
+                          Try Again
+                        </Button>
                       </div>
+                    )}
 
-                      <div className="grid md:grid-cols-2 gap-6">
-                        <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 border-blue-200">
-                          <CardHeader>
-                            <CardTitle className="text-lg flex items-center gap-2">
-                              <Brain className="w-5 h-5 text-blue-600" />
-                              AI Analysis Summary
-                            </CardTitle>
-                          </CardHeader>
-                          <CardContent className="space-y-3">
-                            <div>
-                              <h4 className="font-medium text-sm mb-1 text-blue-800 dark:text-blue-200">Key Factors</h4>
-                              <ul className="text-sm text-blue-700 dark:text-blue-300 space-y-1">
-                                {forecastData.analysis?.keyFactors?.slice(0, 3).map((factor, index) => (
-                                  <li key={index} className="flex items-start gap-2">
-                                    <span className="text-blue-500 mt-1">•</span>
-                                    <span>{factor}</span>
-                                  </li>
-                                )) || <li>Analysis not available</li>}
-                              </ul>
-                            </div>
-                            <div>
-                              <h4 className="font-medium text-sm mb-1 text-blue-800 dark:text-blue-200">Technical Indicators</h4>
-                              <div className="grid grid-cols-2 gap-2 text-xs text-blue-700 dark:text-blue-300">
-                                <div>RSI: {(forecastData.technicalIndicators?.rsi ?? 0).toFixed(2)}</div>
-                                <div>Volatility: {(forecastData.technicalIndicators?.volatility ?? 0).toFixed(2)}%</div>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-
-                        <Card className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20 border-green-200">
-                          <CardHeader>
-                            <CardTitle className="text-lg flex items-center gap-2">
-                              <Target className="w-5 h-5 text-green-600" />
-                              Investment Suggestion
-                            </CardTitle>
-                          </CardHeader>
-                          <CardContent className="space-y-3">
-                            <div className="flex items-center gap-3">
-                              <span className={`px-3 py-1.5 rounded-full text-sm font-medium ${
-                                forecastData.analysis?.recommendation === 'buy' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
-                                forecastData.analysis?.recommendation === 'sell' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' :
-                                'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
-                              }`}>
-                                {forecastData.analysis?.recommendation?.toUpperCase() || 'HOLD'}
-                              </span>
-                              <span className="text-sm text-muted-foreground">
-                                Risk: {forecastData.analysis?.riskLevel}
-                              </span>
-                            </div>
-                            <div className="space-y-2">
-                              <div className="text-sm">
-                                <span className="font-medium text-green-800 dark:text-green-200">Confidence:</span>
-                                <span className="ml-2">{forecastData.forecast?.confidence}%</span>
-                              </div>
-                              <div className="text-sm">
-                                <span className="font-medium text-green-800 dark:text-green-200">Expected Return:</span>
-                                <span className={`ml-2 ${
-                                  (((forecastData.forecast?.targetPrice ?? 0) - currentPrice) / currentPrice * 100) >= 0
-                                    ? 'text-green-600' : 'text-red-600'
-                                }`}>
-                                  {(((forecastData.forecast?.targetPrice ?? 0) - currentPrice) / currentPrice * 100)?.toFixed(2)}%
-                                </span>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      </div>
-
-                      <div className="p-4 bg-yellow-50 dark:bg-yellow-950/20 border border-yellow-200 rounded-lg">
-                        <div className="flex items-start gap-2 text-yellow-800 dark:text-yellow-200">
-                          <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                          <div className="text-sm">
-                            <strong>Disclaimer:</strong> AI predictions are for informational purposes only and should not be considered as financial advice.
-                            Always conduct your own research and consult with a financial advisor before making investment decisions.
+                    {/* Loading Display */}
+                    {forecastLoading && (
+                      <div className="text-center py-8">
+                        <div className="inline-flex flex-col items-center gap-3 text-muted-foreground">
+                          <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                          <div className="space-y-1">
+                            <p className="text-sm font-medium">Generating AI forecast...</p>
+                            <p className="text-xs">This may take up to 30 seconds</p>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  )}
+                    )}
 
-                  {/* Default state when no forecast has been generated */}
-                  {!forecastData && !forecastLoading && !forecastError && (
-                    <div className="text-center py-8">
-                      <div className="inline-flex flex-col items-center gap-3 text-muted-foreground">
-                        <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-                          <Brain className="w-8 h-8 text-primary" />
+                    {/* Results Display */}
+                    {forecastData && !forecastLoading && !forecastError && (
+                      <div className="space-y-4 sm:space-y-6">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+                          <ForecastCard
+                            title="Predicted Price"
+                            value={`${(forecastData.forecast?.targetPrice ?? 0).toFixed(2)}`}
+                            icon={DollarSign}
+                            trend={{
+                              positive: (forecastData.forecast?.targetPrice ?? 0) >= currentPrice,
+                              value: `${((((forecastData.forecast?.targetPrice ?? 0) - currentPrice) / currentPrice) * 100)?.toFixed(2) || '0'}%`
+                            }}
+                            confidence={forecastData.forecast?.confidence}
+                            description={`${forecastPeriod} day${forecastPeriod > 1 ? 's' : ''} ahead prediction`}
+                          />
+                          <ForecastCard
+                            title="Market Sentiment"
+                            value={forecastData.forecast?.trend?.charAt(0).toUpperCase() + forecastData.forecast?.trend?.slice(1) || 'Neutral'}
+                            icon={Activity}
+                            confidence={forecastData.forecast?.confidence}
+                            description={forecastData.analysis?.keyFactors?.[0] || 'Based on technical analysis'}
+                          />
+                          <ForecastCard
+                            title="Risk Level"
+                            value={forecastData.analysis?.riskLevel?.charAt(0).toUpperCase() + forecastData.analysis?.riskLevel?.slice(1) || 'Medium'}
+                            icon={AlertTriangle}
+                            confidence={forecastData.forecast?.confidence}
+                            description={`Range: ${(forecastData.forecast?.priceRange?.low ?? 0).toFixed(2)} - ${(forecastData.forecast?.priceRange?.high ?? 0).toFixed(2)}`}
+                          />
                         </div>
-                        <div className="space-y-1">
-                          <p className="text-sm font-medium">AI Forecast Ready</p>
-                          <p className="text-xs">Click "Generate Forecast" to analyze {selectedCompany.name} stock</p>
+
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+                          <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 border-blue-200">
+                            <CardHeader>
+                              <CardTitle className="text-base sm:text-lg flex items-center gap-2">
+                                <Brain className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
+                                AI Analysis Summary
+                              </CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-3">
+                              <div>
+                                <h4 className="font-medium text-sm mb-1 text-blue-800 dark:text-blue-200">Key Factors</h4>
+                                <ul className="text-sm text-blue-700 dark:text-blue-300 space-y-1">
+                                  {forecastData.analysis?.keyFactors?.slice(0, 3).map((factor, index) => (
+                                    <li key={index} className="flex items-start gap-2">
+                                      <span className="text-blue-500 mt-1">•</span>
+                                      <span className="break-words">{factor}</span>
+                                    </li>
+                                  )) || <li>Analysis not available</li>}
+                                </ul>
+                              </div>
+                              <div>
+                                <h4 className="font-medium text-sm mb-1 text-blue-800 dark:text-blue-200">Technical Indicators</h4>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-blue-700 dark:text-blue-300">
+                                  <div>RSI: {(forecastData.technicalIndicators?.rsi ?? 0).toFixed(2)}</div>
+                                  <div>Volatility: {(forecastData.technicalIndicators?.volatility ?? 0).toFixed(2)}%</div>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+
+                          <Card className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20 border-green-200">
+                            <CardHeader>
+                              <CardTitle className="text-base sm:text-lg flex items-center gap-2">
+                                <Target className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" />
+                                Investment Suggestion
+                              </CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-3">
+                              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
+                                <span className={`px-3 py-1.5 rounded-full text-sm font-medium ${
+                                  forecastData.analysis?.recommendation === 'buy' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
+                                  forecastData.analysis?.recommendation === 'sell' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' :
+                                  'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
+                                }`}>
+                                  {forecastData.analysis?.recommendation?.toUpperCase() || 'HOLD'}
+                                </span>
+                                <span className="text-sm text-muted-foreground">
+                                  Risk: {forecastData.analysis?.riskLevel}
+                                </span>
+                              </div>
+                              <div className="space-y-2">
+                                <div className="text-sm">
+                                  <span className="font-medium text-green-800 dark:text-green-200">Confidence:</span>
+                                  <span className="ml-2">{forecastData.forecast?.confidence}%</span>
+                                </div>
+                                <div className="text-sm">
+                                  <span className="font-medium text-green-800 dark:text-green-200">Expected Return:</span>
+                                  <span className={`ml-2 ${
+                                    (((forecastData.forecast?.targetPrice ?? 0) - currentPrice) / currentPrice * 100) >= 0
+                                      ? 'text-green-600' : 'text-red-600'
+                                  }`}>
+                                    {(((forecastData.forecast?.targetPrice ?? 0) - currentPrice) / currentPrice * 100)?.toFixed(2)}%
+                                  </span>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        </div>
+
+                        <div className="p-4 bg-yellow-50 dark:bg-yellow-950/20 border border-yellow-200 rounded-lg">
+                          <div className="flex items-start gap-2 text-yellow-800 dark:text-yellow-200">
+                            <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                            <div className="text-sm">
+                              <strong>Disclaimer:</strong> AI predictions are for informational purposes only and should not be considered as financial advice.
+                              Always conduct your own research and consult with a financial advisor before making investment decisions.
+                            </div>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+                    )}
 
+                    {/* Default state when no forecast has been generated */}
+                    {!forecastData && !forecastLoading && !forecastError && (
+                      <div className="text-center py-8">
+                        <div className="inline-flex flex-col items-center gap-3 text-muted-foreground">
+                          <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-primary/10 flex items-center justify-center">
+                            <Brain className="w-6 h-6 sm:w-8 sm:h-8 text-primary" />
+                          </div>
+                          <div className="space-y-1">
+                            <p className="text-sm font-medium">AI Forecast Ready</p>
+                            <p className="text-xs">Click "Generate Forecast" to analyze {selectedCompany.name} stock</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
             </div>
           ) : (
-            <div className="flex items-center justify-center h-full">
-              <div className="text-center">
-                <Building2 className="mx-auto h-16 w-16 text-muted-foreground/50 mb-4" />
-                <h2 className="text-xl font-semibold text-muted-foreground mb-2">Select a Company</h2>
-                <p className="text-muted-foreground">
+            <div className="flex items-center justify-center h-full min-h-[60vh]">
+              <div className="text-center px-4">
+                <Building2 className="mx-auto h-12 w-12 sm:h-16 sm:w-16 text-muted-foreground/50 mb-4" />
+                <h2 className="text-lg sm:text-xl font-semibold text-muted-foreground mb-2">Select a Company</h2>
+                <p className="text-sm sm:text-base text-muted-foreground">
                   Choose a company from the sidebar to view its stock details and charts
                 </p>
+                {/* Show mobile button to open sidebar */}
+                <div className="lg:hidden mt-4 relative z-10">
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      console.log('Browse companies clicked - opening sidebar');
+                      setSidebarOpen(true);
+                    }}
+                    className="flex items-center gap-2 mx-auto px-6 py-3 bg-primary text-primary-foreground hover:bg-primary/90 rounded-md transition-colors"
+                    style={{ touchAction: 'manipulation' }}
+                  >
+                    <Menu className="h-4 w-4" />
+                    Browse Companies
+                  </button>
+                </div>
               </div>
             </div>
           )}
