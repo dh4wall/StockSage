@@ -7,7 +7,14 @@
     Harness the power of AI for smarter, simpler stock trading.
   </p>
 
+  <p>
+    <b> beğenirseniz projeye yıldız vermeyi düşünün ⭐</b>
+  </p>
+
   <div>
+    <a href="https://github.com/your-username/stocksage/stargazers">
+      <img src="https://img.shields.io/github/stars/your-username/stocksage?style=for-the-badge&logo=github&color=5865F2" alt="GitHub Stars" />
+    </a>
     <img src="https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" alt="React Badge" />
     <img src="https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black" alt="JavaScript Badge" />
     <img src="https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white" alt="Tailwind CSS Badge" />
@@ -53,27 +60,30 @@
 <div align="center">
   <table>
     <tr>
+    <img src="/assets/landing.png" alt="StockSage Dashboard" />
+    </tr>
+    <tr>
       <td width="50%" align="center">
         <strong>Dashboard View</strong>
         <br><br>
-        <img src="https://i.imgur.com/your-dashboard-image.png" alt="StockSage Dashboard" />
+        <img src="/assets/chart.png" alt="StockSage Dashboard" />
       </td>
       <td width="50%" align="center">
         <strong>AI Forecast</strong>
         <br><br>
-        <img src="https://i.imgur.com/your-forecast-image.png" alt="StockSage AI Forecast" />
+        <img src="/assets/ai-insight.png" alt="StockSage AI Forecast" />
       </td>
     </tr>
     <tr>
       <td width="50%" align="center">
         <strong>Stock Comparison</strong>
         <br><br>
-        <img src="https://i.imgur.com/your-compare-image.png" alt="StockSage Stock Comparison" />
+        <img src="/assets/difference.png" alt="StockSage Stock Comparison" />
       </td>
       <td width="50%" align="center">
-        <strong>Mobile View</strong>
+        <strong>details</strong>
         <br><br>
-        <img src="https://i.imgur.com/your-mobile-image.png" alt="StockSage Mobile View" />
+        <img src="/assets/stock.png" alt="StockSage Mobile View" />
       </td>
     </tr>
   </table>
@@ -150,6 +160,9 @@ This project is deployed using a monorepo pipeline on two separate services:
 * **Frontend**: Deployed on **Vercel**, configured to use the `frontend` directory.
 * **Backend**: Deployed on **Render**, configured to use the `backend` directory.
 
+### Keeping the Backend Alive
+Render's free web services spin down after 15 minutes of inactivity, which can cause a delay on the first request. To prevent this, this project uses a free cron job from **[UptimeRobot](https://uptimerobot.com/)** to send a request to the backend's health check route (`/`) every 10 minutes. This keeps the service active and ensures instant response times.
+
 <div align="center">
   <a href="https://your-vercel-link.vercel.app/">
     <img src="https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white" alt="Vercel Deploy" />
@@ -158,3 +171,9 @@ This project is deployed using a monorepo pipeline on two separate services:
     <img src="https://img.shields.io/badge/Render-46E3B7?style=for-the-badge&logo=render&logoColor=white" alt="Render Deploy" />
   </a>
 </div>
+
+---
+
+## 🙏 Show Your Support
+
+If you found this project useful or learned something from it, please consider giving it a ⭐!
