@@ -10,6 +10,12 @@ const port = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
+
+app.get('/', (req, res) => {
+  res.status(200).json({ status: 'alive' });
+});
+
+
 // Routes
 app.use('/api', stockRoutes);
 
