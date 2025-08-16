@@ -115,7 +115,7 @@ const Landing = () => {
 
   return (
     <>
-      <style jsx>{`
+      <style>{`
         @keyframes fadeInUp {
           from {
             opacity: 0;
@@ -137,29 +137,7 @@ const Landing = () => {
             transform: translateY(0);
           }
         }
-
-        @keyframes fadeInLeft {
-          from {
-            opacity: 0;
-            transform: translateX(-30px);
-          }
-          to {
-            opacity: 1;
-            transform: translateX(0);
-          }
-        }
-
-        @keyframes fadeInRight {
-          from {
-            opacity: 0;
-            transform: translateX(30px);
-          }
-          to {
-            opacity: 1;
-            transform: translateX(0);
-          }
-        }
-
+        
         @keyframes float {
           0%, 100% {
             transform: translateY(0px);
@@ -169,44 +147,12 @@ const Landing = () => {
           }
         }
 
-        @keyframes pulse {
-          0%, 100% {
-            opacity: 0.4;
-          }
-          50% {
-            opacity: 0.8;
-          }
-        }
-
-        @keyframes slideInScale {
-          from {
-            opacity: 0;
-            transform: scale(0.8) translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: scale(1) translateY(0);
-          }
-        }
-
         .animate-fadeInUp {
           animation: fadeInUp 0.8s ease-out forwards;
         }
 
         .animate-fadeInDown {
           animation: fadeInDown 0.8s ease-out forwards;
-        }
-
-        .animate-fadeInLeft {
-          animation: fadeInLeft 0.8s ease-out forwards;
-        }
-
-        .animate-fadeInRight {
-          animation: fadeInRight 0.8s ease-out forwards;
-        }
-
-        .animate-slideInScale {
-          animation: slideInScale 0.6s ease-out forwards;
         }
 
         .floating-element {
@@ -278,7 +224,7 @@ const Landing = () => {
                 <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
                   <TrendingUp className="w-5 h-5 text-primary-foreground" />
                 </div>
-                <span className="text-xl font-bold gradient-text">StockDash</span>
+                <span className="text-xl font-bold ">StockSage</span>
               </div>
               <div className="flex items-center space-x-6">
                 <a href="#features" className="text-muted-foreground hover:text-foreground transition-colors">Features</a>
@@ -287,7 +233,7 @@ const Landing = () => {
                   onClick={() => navigate('/dashboard')}
                   className="bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors"
                 >
-                  Login
+                  DashBoard
                 </button>
               </div>
             </nav>
@@ -297,9 +243,8 @@ const Landing = () => {
             <div className={`max-w-4xl mx-auto space-y-8 ${isVisible ? 'animate-fadeInUp' : 'opacity-0'}`}>
               <div className="space-y-4">
                 <h1 className="text-5xl md:text-7xl font-bold leading-tight">
-                  <span className="gradient-text">Smart Trading</span>
-                  <br />
-                  <span className="text-foreground">Made Simple</span>
+                  <span className="text-foreground">Smart Trading</span>
+                  <span className="block text-primary"> Made Simple</span>
                 </h1>
                 <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
                   Harness the power of AI-driven analytics, real-time market data, and intuitive charts to make smarter investment decisions.
@@ -368,10 +313,10 @@ const Landing = () => {
                 <div className="w-6 h-6 bg-primary rounded flex items-center justify-center">
                   <TrendingUp className="w-4 h-4 text-primary-foreground" />
                 </div>
-                <span className="text-lg font-semibold gradient-text">StockDash</span>
+                <span className="text-lg font-semibold gradient-text">StockSage</span>
               </div>
               <p className="text-muted-foreground">
-                © 2024 StockDash. Empowering traders with intelligent market insights.
+                © 2024 StockSage. Empowering traders with intelligent market insights.
               </p>
             </div>
           </footer>
