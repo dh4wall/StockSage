@@ -98,9 +98,13 @@
     "xtend": "^4.0.2",
     "yahoo-finance2": "^2.13.3"
   },
+  "devDependencies": {
+    "nodemon": "^3.1.4"
+  },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "node app.js"
+    "start": "node app.js",
+    "dev": "nodemon app.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "author": "",
