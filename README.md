@@ -7,9 +7,7 @@
     Harness the power of AI for smarter, simpler stock trading.
   </p>
 
-  <p>
-    <b> beğenirseniz projeye yıldız vermeyi düşünün ⭐</b>
-  </p>
+  
 
   <div>
     <a href="https://github.com/your-username/stocksage/stargazers">
@@ -25,9 +23,7 @@
 
 <br>
 
-<div align="center">
-  <img src="https://i.imgur.com/your-main-screenshot.png" alt="StockSage Dashboard Preview" />
-</div>
+
 
 > **StockSage** is a modern web application designed to demystify the stock market. It combines real-time market data with powerful AI-driven insights from Google's Gemini API, providing users with predictive analysis, stock comparisons, and a beautiful, intuitive interface to track their favorite companies.
 
